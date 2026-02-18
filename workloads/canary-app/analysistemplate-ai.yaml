@@ -7,7 +7,7 @@ spec:
   - name: stable-pod-label
     value: app=rollouts-demo,revision=stable
   - name: canary-pod-label
-    value: app=rollouts-demo,revision=canary
+    value: app=rollouts-demo,role=stable
   metrics:
   - name: ai-log-analysis
     provider:
