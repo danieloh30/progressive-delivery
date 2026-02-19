@@ -5,8 +5,12 @@ metadata:
   namespace: openshift-gitops
 spec:
   namespaceScoped: false
+  image: ghcr.io/argoproj-labs/rollouts-plugin-metric-ai
+  version: latest
   env:
     - name: LOG_LEVEL
       value: "info"
     - name: SSL_CERT_FILE
       value: /etc/ssl/certs/openshift-ca.crt
+    - name: ARGO_ROLLOUTS_SKIP_PLUGIN_DOWNLOAD
+      value: "true"

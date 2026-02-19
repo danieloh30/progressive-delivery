@@ -17,6 +17,3 @@ patches:
       kind: ClusterRole
       name: argo-rollouts
 
-patchesStrategicMerge:
-  - deployment-patch.yaml
-
