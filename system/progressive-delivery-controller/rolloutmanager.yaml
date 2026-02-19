@@ -5,7 +5,7 @@ metadata:
   namespace: argo-rollouts
 spec:
   version: v1.7.2
-  namespaceScoped: false
+  namespaceScoped: true
   
   env:
     - name: LOG_LEVEL
