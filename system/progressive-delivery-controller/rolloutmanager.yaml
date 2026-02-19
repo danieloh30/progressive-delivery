@@ -5,6 +5,8 @@ metadata:
   namespace: openshift-gitops
 spec:
   namespaceScoped: false
+  image: ghcr.io/argoproj-labs/rollouts-plugin-metric-ai
+  version: latest
   env:
     - name: LOG_LEVEL
       value: "info"
@@ -13,17 +15,6 @@ spec:
   plugins:
     metric:
       - name: argoproj-labs/metric-ai
-        location: file:///home/argo-rollouts/plugin-bin/rollouts-plugin-metric-ai
+        # Plugin is built into the custom image at this location
+        location: file:///home/argo-rollouts/rollouts-plugin-metric-ai
     trafficManagement: []
-  initContainers:
-    - name: copy-plugin
-      image: ghcr.io/argoproj-labs/rollouts-plugin-metric-ai:latest
-      command:
-        - sh
-        - -c
-        - |
-          cp /home/argo-rollouts/rollouts-plugin-metric-ai /plugin-bin/rollouts-plugin-metric-ai
-          chmod +x /plugin-bin/rollouts-plugin-metric-ai
-      volumeMounts:
-        - name: plugin-bin
-          mountPath: /plugin-bin
