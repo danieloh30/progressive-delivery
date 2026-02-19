@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argo-rollouts
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: download-metric-ai-plugin
+        image: ghcr.io/argoproj-labs/rollouts-plugin-metric-ai:latest
+        command:
+        - sh
+        - -c
+        - |
+          cp /home/argo-rollouts/rollouts-plugin-metric-ai /plugin-bin/rollouts-plugin-metric-ai
+          chmod +x /plugin-bin/rollouts-plugin-metric-ai
+        volumeMounts:
+        - name: plugin-bin
+          mountPath: /plugin-bin
+      volumes:
+      - name: plugin-bin
+        emptyDir: {}
+      containers:
+      - name: argo-rollouts
+        volumeMounts:
+        - name: plugin-bin
+          mountPath: /home/argo-rollouts/plugin-bin-custom
+
