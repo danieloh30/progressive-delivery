@@ -2,7 +2,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: argo-rollouts-configmap-reader
-  namespace: argo-rollouts
+  namespace: openshift-gitops
 rules:
 - apiGroups:
   - ""
@@ -29,7 +29,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: argo-rollouts-configmap-reader
-  namespace: argo-rollouts
+  namespace: openshift-gitops
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -37,6 +37,6 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: argo-rollouts
-  namespace: argo-rollouts
+  namespace: openshift-gitops
 
 # Made with Bob

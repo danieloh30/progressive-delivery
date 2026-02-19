@@ -1,10 +1,9 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: argo-rollouts
+namespace: openshift-gitops
 
 resources:
-  - argo-rollouts-ns.yaml
   - rolloutmanager.yaml
   - cert-cm.yaml
   # secret.yaml is managed manually (not in git due to .gitignore)
