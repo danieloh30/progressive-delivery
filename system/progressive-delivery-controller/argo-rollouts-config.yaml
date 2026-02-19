@@ -7,4 +7,6 @@ data:
   metricProviderPlugins: |-
     - name: argoproj-labs/metric-ai
       location: file:///home/argo-rollouts/rollouts-plugin-metric-ai
+  trafficRouterPlugins: |
+    []
 
