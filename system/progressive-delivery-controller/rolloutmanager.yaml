@@ -2,10 +2,10 @@ apiVersion: argoproj.io/v1alpha1
 kind: RolloutManager
 metadata:
   name: argo-rollouts
-  namespace: argo-rollouts
+  namespace: openshift-gitops
 spec:
   version: v1.7.2
-  namespaceScoped: true
+  namespaceScoped: false
   
   env:
     - name: LOG_LEVEL
