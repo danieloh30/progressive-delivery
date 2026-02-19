@@ -12,19 +12,18 @@ spec:
   - name: canary-pod-label
     value: app=rollouts-demo,role=canary
   metrics:
-  - name: ai-log-analysis
-    provider:
-      plugin:
-        argoproj-labs/metric-ai:
-          analysisMode: agent
-          namespace: "{{args.namespace}}"
-          podName: "{{args.canary-pod}}"
-          # Fallback fields for default mode if agent is unavailable
-          stableLabel: "{{args.stable-pod-label}}"
-          canaryLabel: "{{args.canary-pod-label}}"
-          model: gemini-2.0-flash-exp
-          baseBranch: main
-          githubUrl: https://github.com/kdubois/progressive-delivery
-          extraPrompt: "Focus on error rates, performance, and resource usage. This is a critical production deployment using agent-based analysis."
+    - name: ai-analysis
+      provider:
+        plugin:
+          argoproj-labs/metric-ai:
+            # Required: Agent URL (must be explicitly configured)
+            agentUrl: http://kubernetes-agent-canary.apps.kevin.hffh.p1.openshiftapps.com
+            # Required: Pod selectors for agent to fetch logs
+            stableLabel: role=stable
+            canaryLabel: role=canary
+            # Optional: Create GitHub issues on failures
+            githubUrl: https://github.com/kdubois/progressive-delivery
+            baseBranch: main
+            # Optional: Additional context for AI analysis
+            extraPrompt: "Ignore color changes. Consider LoadBalancerNegNotReady a temporary condition."
 
-# Made with Bob
