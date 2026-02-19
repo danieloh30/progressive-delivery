@@ -5,8 +5,6 @@ metadata:
   namespace: openshift-gitops
 spec:
   namespaceScoped: false
-  image: ghcr.io/argoproj-labs/rollouts-plugin-metric-ai
-  version: latest
   env:
     - name: LOG_LEVEL
       value: "info"
@@ -15,6 +13,6 @@ spec:
   plugins:
     metric:
       - name: argoproj-labs/metric-ai
-        # Plugin is built into the custom image at this location
-        location: file:///home/argo-rollouts/rollouts-plugin-metric-ai
+        downloadUrl: https://github.com/argoproj-labs/rollouts-plugin-metric-ai/releases/latest/download/rollouts-plugin-metric-ai-linux-amd64
+        location: file:///home/argo-rollouts/plugin-bin/rollouts-plugin-metric-ai
     trafficManagement: []
