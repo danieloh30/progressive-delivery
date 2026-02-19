@@ -16,4 +16,8 @@ patches:
     target:
       kind: ClusterRole
       name: argo-rollouts
+  - path: deployment-patch.yaml
+    target:
+      kind: Deployment
+      name: argo-rollouts
 
