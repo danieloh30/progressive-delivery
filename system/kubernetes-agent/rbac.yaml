@@ -11,7 +11,7 @@ metadata:
 rules:
   # Read pods, logs, and events
   - apiGroups: [""]
-    resources: ["pods", "pods/log", "events", "services", "configmaps", "endpoints"]
+    resources: ["pods", "pods/log", "events", "services", "configmaps", "endpoints", "secrets"]
     verbs: ["get", "list", "watch"]
   # Execute commands in pods (for debugging)
   - apiGroups: [""]
