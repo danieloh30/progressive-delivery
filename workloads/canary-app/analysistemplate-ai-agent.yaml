@@ -17,7 +17,7 @@ spec:
         plugin:
           argoproj-labs/metric-ai:
             # Required: Agent URL (must be explicitly configured)
-            agentUrl: http://kubernetes-agent-canary.apps.kevin.hffh.p1.openshiftapps.com
+            agentUrl: http://kubernetes-agent:8080
             # Required: Pod selectors for agent to fetch logs
             stableLabel: role=stable
             canaryLabel: role=canary
