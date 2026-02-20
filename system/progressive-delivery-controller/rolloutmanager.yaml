@@ -4,6 +4,7 @@ metadata:
   name: argo-rollouts
   namespace: openshift-gitops
 spec:
+  image: quay.io/kevindubois/rollouts-plugin-metric-ai-openshift:latest
   namespaceScoped: false
   env:
     - name: LOG_LEVEL
@@ -13,6 +14,5 @@ spec:
   plugins:
     metric:
       - name: argoproj-labs/metric-ai
-        location: https://github.com/kdubois/rollouts-plugin-metric-ai/releases/download/v0.1.0/rollouts-plugin-metric-ai-linux-amd64
-        sha256: "52d939306c8b9e2f772e20e865c504a34f8302d0636ed37716a377fa82003ea1"
+        location: file:///home/argo-rollouts/rollouts-plugin-metric-ai
     trafficManagement: []
