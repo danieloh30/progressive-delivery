@@ -6,7 +6,6 @@ namespace: openshift-gitops
 resources:
   - rolloutmanager.yaml
   - cert-cm.yaml
-  # argo-rollouts-config.yaml is now managed by the RolloutManager operator via plugins spec
   # secret.yaml is managed manually (not in git due to .gitignore)
   # Create it with: oc apply -f system/progressive-delivery-controller/secret.yaml
   - namespace-role.yaml
