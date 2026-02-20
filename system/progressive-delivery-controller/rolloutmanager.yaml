@@ -5,7 +5,7 @@ metadata:
   namespace: openshift-gitops
 spec:
   image: quay.io/kevindubois/rollouts-plugin-metric-ai-openshift # Image built from https://github.com/kdubois/rollouts-plugin-metric-ai
-  version: v0.1.7
+  version: v0.1.8
   env:
     - name: LOG_LEVEL
       value: "info"
