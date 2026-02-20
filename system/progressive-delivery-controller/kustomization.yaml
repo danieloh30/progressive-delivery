@@ -23,4 +23,8 @@ patches:
     target:
       kind: Deployment
       name: argo-rollouts
+  - path: deployment-initcontainer-patch.yaml
+    target:
+      kind: Deployment
+      name: argo-rollouts
 
