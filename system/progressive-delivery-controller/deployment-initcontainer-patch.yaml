@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argo-rollouts
+  namespace: openshift-gitops
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: copy-metric-plugin
+        image: quay.io/kevindubois/rollouts-plugin-metric-ai-openshift:v0.1.6
+        command:
+        - sh
+        - -c
+        - |
+          echo "Copying metric plugin to plugin directory..."
+          mkdir -p /home/argo-rollouts/plugin-bin/argoproj-labs
+          cp /plugins/rollouts-plugin-metric-ai/metric-ai /home/argo-rollouts/plugin-bin/argoproj-labs/metric-ai
+          chmod +x /home/argo-rollouts/plugin-bin/argoproj-labs/metric-ai
+          echo "Plugin copied successfully"
+          ls -la /home/argo-rollouts/plugin-bin/argoproj-labs/
+        volumeMounts:
+        - name: plugin-bin
+          mountPath: /home/argo-rollouts/plugin-bin
+      containers:
+      - name: argo-rollouts
+        volumeMounts:
+        - name: plugin-bin
+          mountPath: /home/argo-rollouts/plugin-bin
+      volumes:
+      - name: plugin-bin
+        emptyDir: {}
+
+# Made with Bob
