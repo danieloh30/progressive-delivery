@@ -14,5 +14,5 @@ spec:
   plugins:
     metric:
       - name: argoproj-labs/metric-ai
-        location: file:///plugins/rollouts-plugin-metric-ai/metric-ai
+        location: file:/plugins/rollouts-plugin-metric-ai/metric-ai
     trafficManagement: []
