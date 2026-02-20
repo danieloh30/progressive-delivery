@@ -13,5 +13,5 @@ spec:
   plugins:
     metric:
       - name: argoproj-labs/metric-ai
-        location: https://github.com/argoproj-labs/rollouts-plugin-metric-ai
+        location: https://github.com/kdubois/rollouts-plugin-metric-ai/releases/download/v0.1.0/rollouts-plugin-metric-ai-linux-amd64
     trafficManagement: []
