@@ -4,8 +4,8 @@ metadata:
   name: argo-rollouts
   namespace: openshift-gitops
 spec:
-  image: quay.io/kevindubois/rollouts-plugin-metric-ai-openshift
-  version: v0.1.3
+  image: quay.io/kevindubois/rollouts-plugin-metric-ai-openshift # Image built from https://github.com/kdubois/rollouts-plugin-metric-ai
+  version: v0.1.4
   env:
     - name: LOG_LEVEL
       value: "info"
