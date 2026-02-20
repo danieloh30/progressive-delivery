@@ -5,12 +5,17 @@ metadata:
   namespace: openshift-gitops
 spec:
   image: quay.io/kevindubois/rollouts-plugin-metric-ai-openshift # Image built from https://github.com/kdubois/rollouts-plugin-metric-ai
-  version: v0.1.4
+  version: v0.1.5
   env:
     - name: LOG_LEVEL
       value: "info"
     - name: SSL_CERT_FILE
       value: /etc/ssl/certs/openshift-ca.crt
+    - name: GITHUB_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: argo-rollouts
+          key: github_token
   plugins:
     metric:
       - name: argoproj-labs/metric-ai
