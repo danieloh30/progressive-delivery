@@ -12,6 +12,7 @@ resources:
 - analysistemplate-ai-agent.yaml
 - virtualservice.yaml
 - gateway.yaml
+- plugin-rbac.yaml
 
 patchesJson6902:
   - target:
