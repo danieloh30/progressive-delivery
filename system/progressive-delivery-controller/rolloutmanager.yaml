@@ -4,20 +4,14 @@ metadata:
   name: argo-rollouts
   namespace: openshift-gitops
 spec:
-  image: ghcr.io/kdubois/argo-rollouts-openshift # Image built from https://github.com/kdubois/rollouts-plugin-metric-ai
-  version: latest
+  namespaceScoped: false
   env:
     - name: LOG_LEVEL
       value: "info"
     - name: SSL_CERT_FILE
       value: /etc/ssl/certs/openshift-ca.crt
-    - name: GITHUB_TOKEN
-      valueFrom:
-        secretKeyRef:
-          name: argo-rollouts
-          key: github_token
   plugins:
     metric:
       - name: argoproj-labs/metric-ai
-        location: file:/plugins/rollouts-plugin-metric-ai/metric-ai
+        location: https://github.com/kdubois/rollouts-plugin-metric-ai/releases/download/v0.1.7/rollouts-plugin-metric-ai-linux-amd64
     trafficManagement: []
