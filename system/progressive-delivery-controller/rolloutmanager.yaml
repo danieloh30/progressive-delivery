@@ -4,9 +4,6 @@ metadata:
   name: argo-rollouts
   namespace: openshift-gitops
 spec:
-  image: ghcr.io/kdubois/rollouts-plugin-metric-ai-openshift # Image built from https://github.com/kdubois/rollouts-plugin-metric-ai
-  version: latest
-  imagePullPolicy: Always
   env:
     - name: GITHUB_TOKEN
       valueFrom:
