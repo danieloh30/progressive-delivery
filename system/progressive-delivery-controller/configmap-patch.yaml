@@ -6,6 +6,6 @@ metadata:
 data:
   metricProviderPlugins: |
     - name: argoproj-labs/metric-ai
-      https://github.com/kdubois/rollouts-plugin-metric-ai/releases/download/v0.1.8/rollouts-plugin-metric-ai-linux-amd64
+      location: https://github.com/kdubois/rollouts-plugin-metric-ai/releases/download/v0.1.8/rollouts-plugin-metric-ai-linux-amd64
       sha256: ""
 
