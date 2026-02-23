@@ -10,8 +10,3 @@ spec:
         secretKeyRef:
           name: kubernetes-agent
           key: github_token
-  plugins:
-    metric:
-      - name: argoproj-labs/metric-ai
-        location: https://github.com/kdubois/rollouts-plugin-metric-ai/releases/download/v0.1.8/rollouts-plugin-metric-ai-linux-amd64
-    trafficManagement: []
