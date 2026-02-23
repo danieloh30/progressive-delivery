@@ -10,7 +10,7 @@ spec:
     - name: GITHUB_TOKEN
       valueFrom:
         secretKeyRef:
-          name: argo-rollouts
+          name: kubernetes-agent
           key: github_token
   plugins:
     metric:
