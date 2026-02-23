@@ -15,8 +15,3 @@ patches:
     target:
       kind: ClusterRole
       name: argo-rollouts
-  - path: configmap-patch.yaml
-    target:
-      kind: ConfigMap
-      name: argo-rollouts-config
-
