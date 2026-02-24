@@ -15,7 +15,11 @@ patches:
     target:
       kind: ClusterRole
       name: argo-rollouts
+  # Use strategic merge patch to fix RolloutManager bug
+  # RolloutManager creates 'metricPlugins' but should be 'metricProviderPlugins'
   - path: argo-rollouts-configmap.yaml
     target:
       kind: ConfigMap
       name: argo-rollouts-config
+    options:
+      allowNameChange: true
