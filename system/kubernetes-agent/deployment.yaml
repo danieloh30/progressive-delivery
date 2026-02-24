@@ -32,6 +32,12 @@ spec:
                   name: kubernetes-agent
                   key: openai_api_key
                   optional: true
+            - name: OPENAI_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: kubernetes-agent
+                  key: openai_base_url
+                  optional: true
             - name: OPENAI_MODEL
               valueFrom:
                 secretKeyRef:
