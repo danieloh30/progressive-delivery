@@ -59,17 +59,18 @@ stringData:
   # For Gemini (recommended)
   google_api_key: "YOUR_GOOGLE_API_KEY"
   
-  # OR for OpenAI
+  # OR for an OpenAI-spec supported model:
   openai_api_key: "YOUR_OPENAI_API_KEY"
-  openai_model: "gpt-4o"
+  openai_model: "my-model"
+  openai_base_url: "https://my-llm-server.com/v1"
   
-  # GitHub token for PR creation
+  # GitHub token for PR & issue creation
   github_token: "YOUR_GITHUB_TOKEN"
 ```
 
 **Where to get keys:**
 - Google API Key: https://aistudio.google.com/app/apikey
-- OpenAI API Key: https://platform.openai.com/api-keys
+- OpenAI API Key: https://platform.openai.com/api-keys (in case you're using openai. you can also use any compatible OpenAI server like vLLM, Ollama, etc.)
 - GitHub Token: https://github.com/settings/tokens (needs `repo` scope)
 
 Then apply it:

@@ -39,4 +39,3 @@ subjects:
   name: argo-rollouts
   namespace: openshift-gitops
 
-# Made with Bob
