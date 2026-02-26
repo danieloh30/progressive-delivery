@@ -13,7 +13,7 @@ spec:
     name: argo-rollouts-quarkus-demo-canary
     weight: 0
   port:
-    targetPort: 80
+    targetPort: http
   tls:
     termination: edge
     insecureEdgeTerminationPolicy: Redirect
