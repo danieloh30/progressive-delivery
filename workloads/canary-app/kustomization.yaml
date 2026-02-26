@@ -8,10 +8,8 @@ resources:
 - service-canary.yaml
 - service-stable.yaml
 - rollout.yaml
-#- analysistemplate.yaml
 - analysistemplate-ai-agent.yaml
-- virtualservice.yaml
-- gateway.yaml
+- route.yaml
 - plugin-rbac.yaml
 
 patchesJson6902:

@@ -14,11 +14,6 @@ spec:
     metadata:
       name: '{{path.basename}}'
     spec:
-      ignoreDifferences:
-      - group: networking.istio.io
-        kind: VirtualService
-        jsonPointers:
-        - /spec/http/0
       project: workloads
       syncPolicy:
         automated:

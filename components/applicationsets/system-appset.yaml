@@ -15,10 +15,6 @@ spec:
       name: '{{path.basename}}'
     spec:
       ignoreDifferences:
-      - group: networking.istio.io
-        kind: VirtualService
-        jsonPointers:
-        - /spec/http/0
       - kind: ConfigMap
         jsonPointers:
         - /data/service-ca.crt
