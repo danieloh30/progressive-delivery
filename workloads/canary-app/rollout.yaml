@@ -14,7 +14,6 @@ spec:
     metadata:
       labels:
         app: rollouts-demo
-        sidecar.istio.io/inject: "true"
     spec:
       containers:
       - name: rollouts-demo
@@ -53,11 +52,10 @@ spec:
       canaryService: rollouts-demo-canary
       stableService: rollouts-demo-stable
       trafficRouting:
-        istio:
-          virtualService:
-            name: rollout-vsvc
+        plugins:
+          argoproj-labs/openshift:
             routes:
-            - primary
+            - rollouts-demo
       steps:
       - setWeight: 10
       - pause: { duration: 20s } # 20 seconds to start gathering metrics before starting analysis
