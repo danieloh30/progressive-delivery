@@ -19,9 +19,9 @@ patchesJson6902:
       version: v1alpha1
       group: argoproj.io
       kind: Rollout
-      name: rollouts-demo
+      name: argo-rollouts-quarkus-demo
     patch: |-
       - op: replace
         path: /spec/template/spec/containers/0/image
-        value: quay.io/kevindubois/argo-rollouts-quarkus-demo:1.0.0
+        value: quay.io/kevindubois/argo-rollouts-quarkus-demo:latest
 
