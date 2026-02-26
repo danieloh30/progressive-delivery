@@ -23,5 +23,5 @@ patchesJson6902:
     patch: |-
       - op: replace
         path: /spec/template/spec/containers/0/image
-        value: quay.io/kevindubois/argo-rollouts-quarkus-demo:latest
+        value: quay.io/kevindubois/argo-rollouts-quarkus-demo:1.0.0
 
