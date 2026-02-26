@@ -25,7 +25,7 @@ patches:
         value: quay.io/kevindubois/argo-rollouts-quarkus-demo:1.0.1
       - op: replace
         path: /spec/template/spec/containers/0/env/0/value
-        value: "success"
+        value: "failure"
       - op: add
         path: /spec/template/spec/containers/0/env/-
         value:
