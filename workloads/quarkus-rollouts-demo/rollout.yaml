@@ -51,6 +51,9 @@ spec:
           - templateName: ai-analysis-agent
       canaryService: argo-rollouts-quarkus-demo-canary
       stableService: argo-rollouts-quarkus-demo-stable
+      trafficRouting:
+        managedRoutes:
+        - name: argo-rollouts-quarkus-demo
       steps:
       - setWeight: 10
       - pause: { duration: 20s } # 20 seconds to start gathering metrics before starting analysis
