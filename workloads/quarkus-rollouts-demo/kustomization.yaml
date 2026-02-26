@@ -9,7 +9,6 @@ resources:
 - service-stable.yaml
 - rollout.yaml
 - analysistemplate-ai-agent.yaml
-- gateway-api.yaml
 - plugin-rbac.yaml
 
 patchesJson6902:
