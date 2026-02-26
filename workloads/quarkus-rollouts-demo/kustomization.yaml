@@ -13,7 +13,7 @@ resources:
 - plugin-rbac.yaml
 - rbac.yaml
 
-patchesJson6902:
+patches:
   - target:
       version: v1alpha1
       group: argoproj.io
