@@ -1,417 +1,282 @@
-# OpenShift Service Mesh with Argo Rollouts + AI Metrics Plugin
+# Progressive Delivery with Argo Rollouts and AI-Powered Analysis
 
-Example Repo that does what the title says, now with AI-powered canary analysis. You can watch a demo of the base setup: [HERE](https://youtu.be/xURFbR7zNIE?si=OZH4QmMFsTfWW3Py)
+This repository demonstrates progressive delivery on OpenShift using Argo Rollouts with an AI-powered metrics plugin for automated canary analysis. The setup includes a complete GitOps workflow with Argo CD, OpenShift Routes for traffic management, and an autonomous Kubernetes agent that analyzes deployments using AI.
 
-## What's New: AI Metrics Plugin
+## Overview
 
-This repo now includes an AI-powered metrics plugin that analyzes your canary deployments using an autonomous Kubernetes agent. The agent:
+The AI metrics plugin integrates with Argo Rollouts to provide intelligent canary analysis. During rollouts, an autonomous agent fetches logs from stable and canary pods, analyzes them using AI models (Gemini or OpenAI), and decides whether to promote or abort the deployment. When issues are detected, the agent can automatically create GitHub issues with detailed diagnostics.
 
-- Fetches logs from stable and canary pods
-- Analyzes them with AI (Gemini or OpenAI)
-- Decides whether to promote or abort the canary
-- Can create GitHub PRs with fixes when issues are found
-
-### How it works
+### Architecture
 
 ```
 Argo Rollouts (with AI plugin) 
     ↓ (A2A protocol)
 Kubernetes Agent (Quarkus + LangChain4j)
-    ↓ (fetches logs)
-Your Pods (stable + canary)
+    ↓ (fetches logs via Kubernetes API)
+Application Pods (stable + canary)
 ```
 
-The plugin delegates all AI work to the agent - no LLM config needed in the plugin itself.
+The plugin delegates all AI operations to the agent, keeping the plugin itself lightweight and focused on metrics collection.
 
-# Prereqs
+## Prerequisites
 
-* OpenShift Cluster v4.10+
-* [Argo Rollout Kubernetes CLI Plugin](https://argoproj.github.io/argo-rollouts/installation/#kubectl-plugin-installation)
-* **Google API Key** (for Gemini) OR **OpenAI API Key**
-* **GitHub Personal Access Token** (with `repo` scope)
+- OpenShift cluster v4.10 or later
+- [Argo Rollouts kubectl plugin](https://argoproj.github.io/argo-rollouts/installation/#kubectl-plugin-installation)
+- Google API key (for Gemini) or OpenAI API key
+- GitHub personal access token with `repo` scope
 
-This repo assumes that this is a "fresh" cluster. Don't run these steps on a production cluster or a cluster you care about. This is for testing only.
+This setup is designed for testing and demonstration purposes. Do not deploy to production clusters without proper review and hardening.
 
-# Setup
+## Setup
 
-## Fork the repo
+### Fork the Repository
 
-First, fork this repo. You will need to change the [Application Sets in this directory](components/applicationsets) to point to your fork.
+Fork this repository and update the ApplicationSet configurations in [`components/applicationsets`](components/applicationsets) to point to your fork. You'll need to change the `repoURL` fields in both `system-appset.yaml` and `workloads-appset.yaml`.
 
-## Create Secrets
+### Deploy the Stack
 
-Before deploying, you need to create a secret with your API keys.
+Deploy to your OpenShift cluster:
 
-### Kubernetes Agent Secret
+```shell
+until oc apply -k bootstrap/overlays/default/; do sleep 15; done
+```
+
+This command will retry until successful, as some resources depend on operators being installed first. Wait for the deployment to complete before proceeding. The deployment includes:
+
+- OpenShift GitOps (Argo CD)
+- Argo Rollouts with AI metrics plugin
+- Kubernetes agent for AI analysis
+- Sample Quarkus application with canary configuration
+
+### Configure Secrets
+
+After the initial deployment completes and the `openshift-gitops` namespace exists, create the Kubernetes agent secret with your API credentials:
 
 ```shell
 # Copy the template
 cp system/kubernetes-agent/secret.yaml.template system/kubernetes-agent/secret.yaml
 
-# Edit and add your keys
+# Edit and add your credentials
 vim system/kubernetes-agent/secret.yaml
 ```
 
-Fill in your credentials:
+Configure your credentials in the secret:
 
 ```yaml
 stringData:
   # For Gemini (recommended)
   google_api_key: "YOUR_GOOGLE_API_KEY"
   
-  # OR for an OpenAI-spec supported model:
+  # OR for OpenAI-compatible models:
   openai_api_key: "YOUR_OPENAI_API_KEY"
-  openai_model: "my-model"
-  openai_base_url: "https://my-llm-server.com/v1"
+  openai_model: "gpt-4o"
+  openai_base_url: "https://api.openai.com/v1"
   
-  # GitHub token for PR & issue creation
+  # GitHub token for issue creation
   github_token: "YOUR_GITHUB_TOKEN"
 ```
 
-**Where to get keys:**
-- Google API Key: https://aistudio.google.com/app/apikey
-- OpenAI API Key: https://platform.openai.com/api-keys (in case you're using openai. you can also use any compatible OpenAI server like vLLM, Ollama, etc.)
-- GitHub Token: https://github.com/settings/tokens (needs `repo` scope)
+**Where to obtain credentials:**
+- Google API key: https://aistudio.google.com/app/apikey
+- OpenAI API key: https://platform.openai.com/api-keys
+- GitHub token: https://github.com/settings/tokens (requires `repo` scope)
 
-Then apply it:
+Apply the secret:
 
 ```shell
 oc apply -f system/kubernetes-agent/secret.yaml
 ```
 
-## Deploy the Application
+The Kubernetes agent will automatically restart and pick up the new credentials.
 
-After editing the [Application Sets in this directory](components/applicationsets) to point to your fork, apply it to your OCP cluster
+### Verify Deployment
 
-> **NOTE** Errors are expected in this step. Go get some coffee, go for a walk, then comeback to this.
-
-```shell
-until oc apply -k bootstrap/overlays/default/; do sleep 15; done
-```
-
-This deploys:
-- OpenShift GitOps (Argo CD)
-- Argo Rollouts with AI metrics plugin
-- Kubernetes Agent
-- Istio Service Mesh
-- Sample canary app
-
-## Verify Everything is Running
+Check that all components are running:
 
 ```shell
-# Check Argo Rollouts
+# Verify Argo Rollouts
 oc get pods -n openshift-gitops | grep argo-rollouts
 
-# Check Kubernetes Agent
+# Verify Kubernetes agent
 oc get pods -n openshift-gitops | grep kubernetes-agent
 
 # Test agent health
 oc port-forward -n openshift-gitops svc/kubernetes-agent 8080:8080 &
 curl http://localhost:8080/q/health
-# Should return: {"status":"UP",...}
+# Expected: {"status":"UP",...}
 
-# Check the plugin is loaded
+# Confirm plugin is loaded
 oc logs deployment/argo-rollouts -n openshift-gitops | grep -i "metric-ai"
-# Should see: "Successfully loaded plugin: argoproj-labs/metric-ai"
+# Expected: "Successfully loaded plugin: argoproj-labs/metric-ai"
 ```
 
-## See the App
+### Access the Application
 
-You should see the app on your browser; first export your Gateway
+Get the application route URL and open it in your browser:
 
 ```shell
-export GATEWAY_URL=$(oc -n istio-system get route istio-ingressgateway -o jsonpath='{.spec.host}')
+export APP_URL=$(oc get route argo-rollouts-quarkus-demo -n argo-rollouts-quarkus-demo -o jsonpath='{.spec.host}')
+firefox https://$APP_URL
 ```
 
-Then open in browser, example
+You should see the sample Quarkus application dashboard showing the current deployment status and rollout information.
+
+## Testing Progressive Delivery
+
+### Trigger a Rollout
+
+Update the application image version in the kustomization file:
 
 ```shell
-firefox $GATEWAY_URL
-```
+# Example: change from version 1.0.0 to 1.0.1
+sed -i 's/1.0.0/1.0.1/g' workloads/quarkus-rollouts-demo/kustomization.yaml
 
-You should see this
-
-![sample-app](https://i.ibb.co/G2gY1b5/sample-app.png)
-
-# Testing
-
-## Make update
-
-Update the `workloads/canary-app/kustomization.yaml` file from `blue` to `yellow`. Edit the file by hand but if you're brave, you can run a `sed` on the file.
-
-```shell
-sed -i 's/blue/yellow/g' workloads/canary-app/kustomization.yaml
-```
-
-Then commit/push to your fork
-
-```shell
+# Commit and push
 git add .
-git commit -am "yellow"
+git commit -m "Update to version 1.0.1"
 git push
 ```
 
-## Observe
+### Monitor the Rollout
 
-Get status using the plugin (running a `watch` is helpful)
+Watch the rollout progress:
 
 ```shell
-oc argo rollouts get rollout rollouts-demo -n canary
+oc argo rollouts get rollout argo-rollouts-quarkus-demo -n argo-rollouts-quarkus-demo --watch
 ```
 
-You'll see that the blue squares turn into yellow ones. It increases every 15 (or so) seconds until you're fully yellow.
+During each canary step, the AI analysis occurs:
 
-**What's happening with AI analysis:**
-
-At each canary step, the AI metrics plugin:
-1. Sends a request to the Kubernetes Agent
+1. Plugin sends analysis request to the Kubernetes agent
 2. Agent fetches logs from stable and canary pods
-3. Agent analyzes with AI (Gemini/OpenAI)
-4. Agent returns promote/abort decision
-5. Rollout continues or aborts based on analysis
+3. Agent analyzes logs using the configured AI model
+4. Agent returns a promote or abort recommendation
+5. Rollout proceeds or aborts based on the analysis
 
-You can see the analysis results:
-
-```shell
-# List analysis runs
-oc get analysisrun -n canary
-
-# View specific analysis
-oc get analysisrun <name> -n canary -o yaml
-```
-
-## Auto-Rollback
-
-In the UI, you'll see a slider that causes the application to return a 500 error
-
-![500err](https://i.ibb.co/LzzWqX4/witherr.jpg)
-
-Change the application back to blue
+View analysis results:
 
 ```shell
-sed -i 's/yellow/blue/g' workloads/canary-app/kustomization.yaml
+# List all analysis runs
+oc get analysisrun -n argo-rollouts-quarkus-demo
+
+# View specific analysis details
+oc get analysisrun <name> -n argo-rollouts-quarkus-demo -o yaml
 ```
 
-Commit and push...
+### Test Auto-Rollback
+
+The sample application includes a failure mode that can be triggered via the UI. To test automatic rollback:
+
+1. Start a new rollout by updating the application
+2. Once the rollout begins, trigger errors in the canary pods using the UI slider
+3. Watch as the AI agent detects the errors and aborts the rollout
+4. The deployment automatically rolls back to the stable version
 
 ```shell
-git add .
-git commit -am "blue with errors"
-git push
+# Monitor the rollback
+oc argo rollouts get rollout argo-rollouts-quarkus-demo -n argo-rollouts-quarkus-demo
 ```
 
-Initiate the rollout by refreshing the Argo CD "canary-app" Application. This will initiate a rollout.
-
-Once the rollout has started, slide the error slider on the application to 100% and watch as the rollout fails
+To retry after fixing the issue:
 
 ```shell
-oc argo rollouts get rollout rollouts-demo -n canary
+oc argo rollouts retry rollout argo-rollouts-quarkus-demo -n argo-rollouts-quarkus-demo
 ```
 
-It should fail and it should look something like this...
+## Configuration
 
-```shell
-NAME                                       KIND         STATUS        AGE    INFO
-⟳ rollouts-demo                            Rollout      ✖ Degraded    3h27m  
-├──# revision:26                                                             
-│  ├──⧉ rollouts-demo-6499d5bbb9           ReplicaSet   • ScaledDown  16m    canary,delay:passed
-│  └──α rollouts-demo-6499d5bbb9-26        AnalysisRun  ✖ Failed      2m44s  ✖ 3
-├──# revision:25                                                             
-│  ├──⧉ rollouts-demo-785bb66569           ReplicaSet   ✔ Healthy     41m    stable
-│  │  ├──□ rollouts-demo-785bb66569-7gwpj  Pod          ✔ Running     13m    ready:2/2
-│  │  ├──□ rollouts-demo-785bb66569-hqmlc  Pod          ✔ Running     13m    ready:2/2
-│  │  ├──□ rollouts-demo-785bb66569-rm7j5  Pod          ✔ Running     13m    ready:2/2
-│  │  ├──□ rollouts-demo-785bb66569-mjcq5  Pod          ✔ Running     12m    ready:2/2
-│  │  ├──□ rollouts-demo-785bb66569-h4tzf  Pod          ✔ Running     12m    ready:2/2
-│  │  ├──□ rollouts-demo-785bb66569-v6qn2  Pod          ✔ Running     12m    ready:2/2
-│  │  ├──□ rollouts-demo-785bb66569-fvvmb  Pod          ✔ Running     11m    ready:2/2
-│  │  ├──□ rollouts-demo-785bb66569-jdt27  Pod          ✔ Running     11m    ready:2/2
-│  │  ├──□ rollouts-demo-785bb66569-f6krk  Pod          ✔ Running     11m    ready:2/2
-│  │  └──□ rollouts-demo-785bb66569-w7w6w  Pod          ✔ Running     11m    ready:2/2
-```
+### Plugin Registration
 
-Your app should have failed back to being all yellow since you had errors during the rollout. The AI agent detected the errors in the canary logs and recommended aborting.
-
-To restart/fix this. Move the error slider to 0% and restart the rollout.
-
-```shell
-oc argo rollouts retry rollout rollouts-demo -n canary
-```
-
-This time, the rollout should finish and you should have blue squares.
-
-# Architecture Details
-
-## How the Plugin is Registered
-
-The AI metrics plugin is registered in the Argo Rollouts ConfigMap:
+The AI metrics plugin is registered in the Argo Rollouts ConfigMap at [`system/progressive-delivery-controller/argo-rollouts-configmap.yaml`](system/progressive-delivery-controller/argo-rollouts-configmap.yaml):
 
 ```yaml
-# system/progressive-delivery-controller/argo-rollouts-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argo-rollouts-config
-  namespace: openshift-gitops
 data:
   metricProviderPlugins: |-
     - name: argoproj-labs/metric-ai
       location: file:///home/argo-rollouts/rollouts-plugin-metric-ai
 ```
 
-The plugin binary is baked into the Argo Rollouts container image:
+The plugin binary is included in the custom Argo Rollouts image specified in [`system/progressive-delivery-controller/rolloutmanager.yaml`](system/progressive-delivery-controller/rolloutmanager.yaml).
+
+### Analysis Template
+
+The AnalysisTemplate at [`workloads/quarkus-rollouts-demo/analysistemplate-ai-agent.yaml`](workloads/quarkus-rollouts-demo/analysistemplate-ai-agent.yaml) configures how the plugin analyzes deployments:
 
 ```yaml
-# system/progressive-delivery-controller/rolloutmanager.yaml
-spec:
-  image: ghcr.io/argoproj-labs/rollouts-plugin-metric-ai
-  version: latest
-```
-
-## How AnalysisTemplates Use the Plugin
-
-The AnalysisTemplate references the plugin by name:
-
-```yaml
-# workloads/canary-app/analysistemplate-ai-agent.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: ai-analysis-agent
-  namespace: canary
 spec:
   metrics:
     - name: ai-analysis
       provider:
         plugin:
           argoproj-labs/metric-ai:
-            # Agent URL (required)
             agentUrl: http://kubernetes-agent:8080
-            # Pod selectors for log fetching
             stableLabel: role=stable
             canaryLabel: role=canary
-            # Optional: GitHub integration
-            githubUrl: https://github.com/kdubois/progressive-delivery
+            githubUrl: https://github.com/your-org/your-repo
             baseBranch: main
-            # Optional: Extra context for AI
-            extraPrompt: "Ignore color changes. Consider LoadBalancerNegNotReady a temporary condition."
+            extraPrompt: "Additional context for AI analysis"
 ```
 
-## How the Agent Works
+### Agent Deployment
 
-The Kubernetes Agent is deployed as a separate service:
+The Kubernetes agent runs as a separate service in the `openshift-gitops` namespace. Configuration is in [`system/kubernetes-agent/deployment.yaml`](system/kubernetes-agent/deployment.yaml). The agent requires RBAC permissions to access pod logs across namespaces.
 
-```yaml
-# system/kubernetes-agent/deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: kubernetes-agent
-  namespace: openshift-gitops
-spec:
-  template:
-    spec:
-      containers:
-        - name: agent
-          image: quay.io/kevindubois/kubernetes-agent:latest
-          env:
-            - name: GOOGLE_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: kubernetes-agent
-                  key: google_api_key
-            - name: GITHUB_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: kubernetes-agent
-                  key: github_token
-```
+## Troubleshooting
 
-When the plugin calls the agent:
-
-1. Plugin sends A2A request to `http://kubernetes-agent:8080/a2a/analyze`
-2. Agent uses Kubernetes API to fetch logs (has RBAC permissions)
-3. Agent analyzes logs with AI model (Gemini or OpenAI)
-4. Agent returns structured JSON with promote/abort decision
-5. Plugin uses the decision to pass/fail the metric
-6. Argo Rollouts promotes or aborts based on metric result
-
-# Troubleshooting
-
-## Plugin not loading
+### Plugin Not Loading
 
 ```shell
-# Check ConfigMap
+# Check ConfigMap configuration
 oc get configmap argo-rollouts-config -n openshift-gitops -o yaml
 
-# Check Rollouts logs
+# Check Rollouts controller logs
 oc logs deployment/argo-rollouts -n openshift-gitops | grep -i plugin
 ```
 
-## Agent connection failed
+### Agent Connection Issues
 
 ```shell
-# Check agent is running
+# Verify agent is running
 oc get pods -n openshift-gitops | grep kubernetes-agent
 
 # Check agent logs
 oc logs deployment/kubernetes-agent -n openshift-gitops
 
-# Test connectivity
+# Test connectivity from Rollouts controller
 oc exec -it deployment/argo-rollouts -n openshift-gitops -- \
   curl http://kubernetes-agent:8080/q/health
 ```
 
-## Agent health check failing
+### Analysis Failures
 
 ```shell
-# Check logs for errors
-oc logs deployment/kubernetes-agent -n openshift-gitops | grep -i error
+# Check AnalysisTemplate configuration
+oc get analysistemplate ai-analysis-agent -n argo-rollouts-quarkus-demo -o yaml
 
-# Common issues:
-# 1. Missing API key - check secret
-oc get secret kubernetes-agent -n openshift-gitops -o yaml
+# Verify pod labels match selectors
+oc get pods -n argo-rollouts-quarkus-demo --show-labels
 
-# 2. Invalid API key - check agent logs for auth errors
-
-# 3. Out of memory - check resource limits
-oc top pod -n openshift-gitops | grep kubernetes-agent
-```
-
-## Analysis always fails
-
-```shell
-# Check AnalysisTemplate config
-oc get analysistemplate ai-analysis-agent -n canary -o yaml
-
-# Verify pod labels match
-oc get pods -n canary --show-labels
-
-# Check agent can fetch logs
+# Check agent can access logs
 oc logs deployment/kubernetes-agent -n openshift-gitops | grep -i "fetching logs"
 ```
 
-## GitHub PRs not created
+### API Key Issues
 
 ```shell
-# Check GitHub token
-oc get secret kubernetes-agent -n openshift-gitops -o jsonpath='{.data.github_token}' | base64 -d
+# Verify secret exists and contains keys
+oc get secret kubernetes-agent -n openshift-gitops -o yaml
 
-# Token needs 'repo' scope
-
-# Check agent logs
-oc logs deployment/kubernetes-agent -n openshift-gitops | grep -i github
+# Check agent logs for authentication errors
+oc logs deployment/kubernetes-agent -n openshift-gitops | grep -i "auth\|api key"
 ```
 
-## Debug mode
-
-Enable debug logging:
+### Enable Debug Logging
 
 ```shell
-# For plugin (in Rollouts controller)
+# Enable debug logging for Rollouts controller
 oc set env deployment/argo-rollouts LOG_LEVEL=debug -n openshift-gitops
 
-# For agent
+# Enable debug logging for agent
 oc set env deployment/kubernetes-agent QUARKUS_LOG_LEVEL=DEBUG -n openshift-gitops
 
 # View logs
@@ -419,49 +284,43 @@ oc logs -f deployment/argo-rollouts -n openshift-gitops
 oc logs -f deployment/kubernetes-agent -n openshift-gitops
 ```
 
-## Common errors
+## Advanced Configuration
 
-| Error | Fix |
-|-------|-----|
-| `agentUrl is required` | Add `agentUrl: http://kubernetes-agent:8080` to AnalysisTemplate |
-| `agent health check failed` | Check agent pod is running and healthy |
-| `failed to fetch logs` | Check RBAC permissions for agent ServiceAccount |
-| `authentication failed` | Check API key in secret is valid |
-| `context deadline exceeded` | Check network connectivity to agent |
+### Switching AI Models
 
-# Advanced Config
-
-## Switch AI models
-
-Edit the secret to switch between Gemini and OpenAI:
+Edit the agent secret to switch between Gemini and OpenAI:
 
 ```shell
 oc edit secret kubernetes-agent -n openshift-gitops
 
-# For Gemini:
-# google_api_key: "YOUR_KEY"
-
-# For OpenAI:
-# openai_api_key: "YOUR_KEY"
-# openai_model: "gpt-4o"
-
-# Restart agent
+# Restart agent to apply changes
 oc rollout restart deployment/kubernetes-agent -n openshift-gitops
 ```
 
-## Custom analysis prompts
+### Custom Analysis Prompts
 
-Add context-specific instructions:
+Add application-specific context to improve analysis accuracy:
 
 ```yaml
 extraPrompt: |
-  This is a payment service.
-  Focus on transaction errors and database issues.
-  Ignore UI color changes.
+  This is a payment processing service.
+  Focus on transaction errors and database connection issues.
+  Temporary network errors during startup are acceptable.
+  Ignore UI-related warnings.
 ```
 
-## More info
+### GitHub Integration
 
-- Plugin README: `rollouts-plugin-metric-ai/README.md`
-- Agent README: `kubernetes-agent/README.md`
-- Argo Rollouts docs: https://argoproj.github.io/argo-rollouts/
+When configured with a GitHub URL and token, the agent can automatically create issues when deployments fail. Issues include:
+
+- Detailed error analysis
+- Log excerpts showing the problem
+- Recommended remediation steps
+- Links to relevant documentation
+
+## Additional Resources
+
+- [Argo Rollouts Plugin README](../rollouts-plugin-metric-ai/README.md)
+- [Kubernetes Agent README](../kubernetes-agent/README.md)
+- [Argo Rollouts Documentation](https://argoproj.github.io/argo-rollouts/)
+- [OpenShift GitOps Documentation](https://docs.openshift.com/gitops/)
