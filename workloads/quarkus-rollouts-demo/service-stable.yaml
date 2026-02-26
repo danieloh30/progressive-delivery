@@ -11,4 +11,3 @@ spec:
     name: http
   selector:
     app: argo-rollouts-quarkus-demo
-    role: stable
