@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: argo-rollouts-quarkus-demo
-        image: quay.io/kevindubois/argo-rollouts-quarkus-demo:1.0.0
+        image: quay.io/kevindubois/argo-rollouts-quarkus-demo
         imagePullPolicy: Always
         ports:
         - name: http
@@ -37,7 +37,7 @@ spec:
         startingStep: 2 # delay starting analysis run until we have collected enough metrics
         args:
         - name: service-name
-          value: argo-rollouts-quarkus-demo-canary.canary.svc.cluster.local
+          value: argo-rollouts-quarkus-demo-canary.argo-rollouts-quarkus-demo.svc.cluster.local
         - name: stable-pod-label
           value: app=argo-rollouts-quarkus-demo,role=stable
         - name: canary-pod-label
