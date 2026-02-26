@@ -15,6 +15,7 @@ spec:
       labels:
         app: argo-rollouts-quarkus-demo
     spec:
+      serviceAccountName: argo-rollouts-quarkus-demo
       containers:
       - name: argo-rollouts-quarkus-demo
         image: quay.io/kevindubois/argo-rollouts-quarkus-demo
@@ -23,6 +24,9 @@ spec:
         - name: http
           containerPort: 8080
           protocol: TCP
+        env:
+        - name: SCENARIO_MODE
+          value: "success"
   strategy:
     canary:
       # Add revision labels to stable and canary pods

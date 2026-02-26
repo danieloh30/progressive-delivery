@@ -11,6 +11,7 @@ resources:
 - analysistemplate-ai-agent.yaml
 - route.yaml
 - plugin-rbac.yaml
+- rbac.yaml
 
 patchesJson6902:
   - target:
@@ -21,5 +22,18 @@ patchesJson6902:
     patch: |-
       - op: replace
         path: /spec/template/spec/containers/0/image
-        value: quay.io/kevindubois/argo-rollouts-quarkus-demo:failure
+        value: quay.io/kevindubois/argo-rollouts-quarkus-demo:1.0.0
+      - op: replace
+        path: /spec/template/spec/containers/0/env/0/value
+        value: "failure"
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: ROLLOUT_NAME
+          value: "argo-rollouts-quarkus-demo"
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: ROLLOUT_NAMESPACE
+          value: "argo-rollouts-quarkus-demo"
 
