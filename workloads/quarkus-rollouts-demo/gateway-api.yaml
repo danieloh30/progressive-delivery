@@ -1,0 +1,33 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: argo-rollouts-quarkus-demo-gateway
+  namespace: argo-rollouts-quarkus-demo
+spec:
+  gatewayClassName: istio
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: Same
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: argo-rollouts-quarkus-demo-route
+  namespace: argo-rollouts-quarkus-demo
+spec:
+  parentRefs:
+  - name: argo-rollouts-quarkus-demo-gateway
+  rules:
+  - backendRefs:
+    - name: argo-rollouts-quarkus-demo-stable
+      port: 80
+      weight: 100
+    - name: argo-rollouts-quarkus-demo-canary
+      port: 80
+      weight: 0
+
+# Made with Bob
