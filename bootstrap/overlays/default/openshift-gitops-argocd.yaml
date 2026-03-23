@@ -72,9 +72,21 @@ spec:
       route:
         enabled: false
   rbac:
+    defaultPolicy: 'role:readonly'
     policy: |
       g, system:cluster-admins, role:admin
       g, cluster-admins, role:admin
+      p, role:admin-local, applications, *, */*, allow
+      p, role:admin-local, clusters, get, *, allow
+      p, role:admin-local, repositories, get, *, allow
+      p, role:admin-local, repositories, create, *, allow
+      p, role:admin-local, repositories, update, *, allow
+      p, role:admin-local, repositories, delete, *, allow
+      p, role:admin-local, projects, get, *, allow
+      p, role:admin-local, accounts, get, *, allow
+      p, role:admin-local, certificates, get, *, allow
+      p, role:admin-local, gpgkeys, get, *, allow
+      g, admin, role:admin-local
     scopes: '[groups]'
   repo:
     resources:
