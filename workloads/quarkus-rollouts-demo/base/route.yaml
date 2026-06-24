@@ -8,6 +8,9 @@ metadata:
     app.kubernetes.io/name: quarkus-demo
     app.kubernetes.io/part-of: quarkus-demo-app
     app.openshift.io/runtime: quarkus
+    app.kubernetes.io/component: backend
+  annotations:
+    app.openshift.io/vcs-uri: https://github.com/danieloh30/progressive-delivery
 spec:
   to:
     kind: Service
