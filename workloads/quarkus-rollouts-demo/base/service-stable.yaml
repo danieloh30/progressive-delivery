@@ -3,6 +3,11 @@ kind: Service
 metadata:
   name: quarkus-demo-stable
   namespace: quarkus-demo
+  labels:
+    app: quarkus-demo
+    app.kubernetes.io/name: quarkus-demo
+    app.kubernetes.io/part-of: quarkus-demo-app
+    app.openshift.io/runtime: quarkus
 spec:
   ports:
   - port: 80
