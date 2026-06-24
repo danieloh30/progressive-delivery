@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quarkus-demo
+  namespace: quarkus-demo
+  labels:
+    app: quarkus-demo
+    app.kubernetes.io/name: quarkus-demo
+    app.kubernetes.io/part-of: quarkus-demo-app
+    app.openshift.io/runtime: quarkus
+    app.kubernetes.io/component: backend
+  annotations:
+    app.openshift.io/vcs-uri: https://github.com/danieloh30/progressive-delivery
+    app.openshift.io/connects-to: >-
+      [{"apiVersion":"argoproj.io/v1alpha1","kind":"Rollout","name":"quarkus-demo"}]
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: quarkus-demo
+  template:
+    metadata:
+      labels:
+        app: quarkus-demo
+        app.kubernetes.io/name: quarkus-demo
+        app.kubernetes.io/part-of: quarkus-demo-app
+        app.openshift.io/runtime: quarkus
+        app.kubernetes.io/component: backend
+    spec:
+      containers:
+      - name: quarkus-demo
+        image: quay.io/kevindubois/argo-rollouts-quarkus-demo:1.0.0
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP

@@ -7,6 +7,7 @@ resources:
 - namespace.yaml
 - service-canary.yaml
 - service-stable.yaml
+- deployment.yaml
 - rollout.yaml
 - analysistemplate-ai-agent.yaml
 - route.yaml

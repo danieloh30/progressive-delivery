@@ -12,5 +12,10 @@ patches:
     kind: Rollout
     name: quarkus-demo
 
+images:
+- name: quay.io/kevindubois/argo-rollouts-quarkus-demo
+  newName: ghcr.io/kdubois/argo-rollouts-quarkus-demo
+  newTag: v2.nullpointer
+
 commonLabels:
   scenario: null-pointer-bug
