@@ -87,6 +87,9 @@ spec:
       p, role:admin-local, certificates, get, *, allow
       p, role:admin-local, gpgkeys, get, *, allow
       g, admin, role:admin-local
+      p, role:workloads-admin, applications, *, workloads/*, allow
+      p, role:workloads-admin, projects, get, workloads, allow
+      g, admin, role:workloads-admin
     scopes: '[groups]'
   repo:
     resources:
