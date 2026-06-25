@@ -134,92 +134,124 @@ else
 fi
 
 # Phase 2: Service Mesh Validation
-print_header "Phase 2: Red Hat OpenShift Service Mesh"
+print_header "Phase 2: Red Hat OpenShift Service Mesh (optional)"
 
-check_namespace "istio-system"
-check_namespace "openshift-operators-redhat"
-check_namespace "openshift-distributed-tracing"
+if ! oc get namespace istio-system &>/dev/null; then
+    print_info "Namespace 'istio-system' not found — Service Mesh is not installed (optional, skipping)"
+else
+    check_namespace "istio-system"
+    check_namespace "openshift-operators-redhat"
+    check_namespace "openshift-distributed-tracing"
 
-check_operator "openshift-operators-redhat" "servicemeshoperator"
-check_operator "openshift-operators-redhat" "kiali-operator"
-check_operator "openshift-distributed-tracing" "jaeger-operator"
+    check_operator "openshift-operators-redhat" "servicemeshoperator"
+    check_operator "openshift-operators-redhat" "kiali-operator"
+    check_operator "openshift-distributed-tracing" "jaeger-operator"
 
-# Check Service Mesh Control Plane
-if oc get smcp -n istio-system &>/dev/null; then
-    SMCP_STATUS=$(oc get smcp -n istio-system -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}')
-    if [ "$SMCP_STATUS" = "True" ]; then
-        print_success "Service Mesh Control Plane is ready"
+    # Check Service Mesh Control Plane
+    if oc get smcp -n istio-system &>/dev/null; then
+        SMCP_STATUS=$(oc get smcp -n istio-system -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}')
+        if [ "$SMCP_STATUS" = "True" ]; then
+            print_success "Service Mesh Control Plane is ready"
+        else
+            print_error "Service Mesh Control Plane is not ready"
+        fi
     else
-        print_error "Service Mesh Control Plane is not ready"
+        print_error "Service Mesh Control Plane not found"
     fi
-else
-    print_error "Service Mesh Control Plane not found"
-fi
 
-# Check Istio pods
-check_pods_running "istio-system" "app=istiod" 1
-check_pods_running "istio-system" "app=istio-ingressgateway" 1
-check_pods_running "istio-system" "app=istio-egressgateway" 1
+    # Check Istio pods
+    check_pods_running "istio-system" "app=istiod" 1
+    check_pods_running "istio-system" "app=istio-ingressgateway" 1
+    check_pods_running "istio-system" "app=istio-egressgateway" 1
 
-# Check Kiali
-if oc get route kiali -n istio-system &>/dev/null; then
-    KIALI_URL=$(oc get route kiali -n istio-system -o jsonpath='{.spec.host}')
-    print_success "Kiali UI available at: https://$KIALI_URL"
-else
-    print_warning "Kiali route not found"
-fi
+    # Check Kiali
+    if oc get route kiali -n istio-system &>/dev/null; then
+        KIALI_URL=$(oc get route kiali -n istio-system -o jsonpath='{.spec.host}')
+        print_success "Kiali UI available at: https://$KIALI_URL"
+    else
+        print_warning "Kiali route not found"
+    fi
 
-# Check Jaeger
-if oc get route jaeger -n istio-system &>/dev/null; then
-    JAEGER_URL=$(oc get route jaeger -n istio-system -o jsonpath='{.spec.host}')
-    print_success "Jaeger UI available at: https://$JAEGER_URL"
-else
-    print_warning "Jaeger route not found"
+    # Check Jaeger
+    if oc get route jaeger -n istio-system &>/dev/null; then
+        JAEGER_URL=$(oc get route jaeger -n istio-system -o jsonpath='{.spec.host}')
+        print_success "Jaeger UI available at: https://$JAEGER_URL"
+    else
+        print_warning "Jaeger route not found"
+    fi
 fi
 
 # Phase 3: Argo Rollouts Validation
 print_header "Phase 3: Argo Rollouts"
 
-check_namespace "argo-rollouts"
+# RolloutManager is deployed into openshift-gitops (not argo-rollouts) in this setup
+ROLLOUTS_NS="openshift-gitops"
 check_crd "rollouts.argoproj.io"
 check_crd "analysistemplates.argoproj.io"
 check_crd "analysisruns.argoproj.io"
 check_crd "experiments.argoproj.io"
 
-# Check RolloutManager
-if oc get rolloutmanager -n argo-rollouts &>/dev/null; then
-    ROLLOUT_COUNT=$(oc get rolloutmanager -n argo-rollouts --no-headers 2>/dev/null | wc -l)
+# Check RolloutManager — deployed into openshift-gitops in this setup
+if oc get rolloutmanager -n "$ROLLOUTS_NS" &>/dev/null; then
+    ROLLOUT_COUNT=$(oc get rolloutmanager -n "$ROLLOUTS_NS" --no-headers 2>/dev/null | wc -l)
     if [ "$ROLLOUT_COUNT" -gt 0 ]; then
-        ROLLOUT_PHASE=$(oc get rolloutmanager -n argo-rollouts -o jsonpath='{.items[0].status.phase}' 2>/dev/null)
+        ROLLOUT_PHASE=$(oc get rolloutmanager -n "$ROLLOUTS_NS" -o jsonpath='{.items[0].status.phase}' 2>/dev/null)
         if [ "$ROLLOUT_PHASE" = "Available" ]; then
-            print_success "RolloutManager is available"
+            print_success "RolloutManager is available in '$ROLLOUTS_NS'"
         elif [ -z "$ROLLOUT_PHASE" ]; then
             print_warning "RolloutManager exists but status is not yet available (may still be initializing)"
         else
             print_warning "RolloutManager phase is '$ROLLOUT_PHASE'"
         fi
     else
-        print_error "RolloutManager not found"
+        print_error "RolloutManager not found in '$ROLLOUTS_NS'"
     fi
 else
-    print_error "RolloutManager CRD or resource not found"
+    print_error "RolloutManager CRD or resource not found in '$ROLLOUTS_NS'"
 fi
 
-check_pods_running "argo-rollouts" "app.kubernetes.io/name=argo-rollouts" 1
+check_pods_running "$ROLLOUTS_NS" "app.kubernetes.io/name=argo-rollouts" 1
 
 # Check for metric plugin
-if oc get cm argo-rollouts-config -n argo-rollouts &>/dev/null; then
-    if oc get cm argo-rollouts-config -n argo-rollouts -o yaml | grep -q "metricProviderPlugins"; then
+if oc get cm argo-rollouts-config -n "$ROLLOUTS_NS" &>/dev/null; then
+    if oc get cm argo-rollouts-config -n "$ROLLOUTS_NS" -o yaml | grep -q "metricProviderPlugins"; then
         print_success "Metric provider plugins configured"
     else
         print_warning "Metric provider plugins not configured in ConfigMap"
     fi
 else
-    print_warning "argo-rollouts-config ConfigMap not found"
+    print_warning "argo-rollouts-config ConfigMap not found in '$ROLLOUTS_NS'"
 fi
 
-# Phase 4: GitOps Configuration Validation
-print_header "Phase 4: GitOps Configuration"
+# Phase 4: ArgoCD RBAC Validation
+print_header "Phase 4: ArgoCD RBAC Validation"
+
+# Check that role:workloads-admin has an explicit sync permission
+# (wildcard '*' does not imply 'sync' in ArgoCD Casbin policy)
+ARGOCD_RBAC_CM=$(oc get configmap argocd-rbac-cm -n openshift-gitops -o jsonpath='{.data.policy\.csv}' 2>/dev/null)
+if [ -z "$ARGOCD_RBAC_CM" ]; then
+    # Fall back to ArgoCD CR spec
+    ARGOCD_RBAC_CM=$(oc get argocd openshift-gitops -n openshift-gitops -o jsonpath='{.spec.rbac.policy}' 2>/dev/null)
+fi
+
+if echo "$ARGOCD_RBAC_CM" | grep -q "applications, sync"; then
+    print_success "ArgoCD RBAC: explicit 'sync' action is present for applications"
+else
+    print_error "ArgoCD RBAC: no explicit 'sync' action found — users will get 'permission denied' on manual sync"
+    print_info "  Fix: add 'p, role:<your-role>, applications, sync, <project>/*, allow' to .spec.rbac.policy"
+fi
+
+# Check OAuth scopes include groups so Dex can resolve group membership
+ARGOCD_SCOPES=$(oc get argocd openshift-gitops -n openshift-gitops -o jsonpath='{.spec.rbac.scopes}' 2>/dev/null)
+if echo "$ARGOCD_SCOPES" | grep -q "groups"; then
+    print_success "ArgoCD RBAC: 'groups' is present in OAuth scopes"
+else
+    print_error "ArgoCD RBAC: 'groups' missing from OAuth scopes — user group memberships won't resolve"
+    print_info "  Fix: set .spec.rbac.scopes to '[groups,email,preferred_username]'"
+fi
+
+# Phase 5: GitOps Configuration Validation
+print_header "Phase 5: GitOps Configuration"
 
 # Check AppProjects
 if oc get appproject system -n openshift-gitops &>/dev/null; then
@@ -271,6 +303,77 @@ if [ "$APP_COUNT" -gt 0 ]; then
     fi
 else
     print_warning "No ArgoCD Applications found"
+fi
+
+# Phase 6: Quarkus Rollout Health Validation
+print_header "Phase 6: Quarkus Rollout (quarkus-demo)"
+
+if oc get namespace quarkus-demo &>/dev/null; then
+    # Check Rollout exists and is Healthy (not Degraded/Paused/Aborted)
+    ROLLOUT_PHASE=$(oc get rollout quarkus-demo -n quarkus-demo -o jsonpath='{.status.phase}' 2>/dev/null)
+    ROLLOUT_MSG=$(oc get rollout quarkus-demo -n quarkus-demo -o jsonpath='{.status.message}' 2>/dev/null)
+    if [ "$ROLLOUT_PHASE" = "Healthy" ]; then
+        print_success "Rollout 'quarkus-demo' is Healthy"
+    elif [ "$ROLLOUT_PHASE" = "Degraded" ]; then
+        print_error "Rollout 'quarkus-demo' is Degraded: $ROLLOUT_MSG"
+        print_info "  Fix: kubectl argo rollouts retry rollout quarkus-demo -n quarkus-demo"
+    elif [ -n "$ROLLOUT_PHASE" ]; then
+        print_warning "Rollout 'quarkus-demo' phase is '$ROLLOUT_PHASE': $ROLLOUT_MSG"
+    else
+        print_warning "Rollout 'quarkus-demo' not found in quarkus-demo namespace"
+    fi
+
+    # Check stub Deployment selector does NOT match Rollout pods
+    # The stub Deployment must carry a unique discriminator label so its
+    # selector never overlaps with Rollout-managed pods (which causes scale-down)
+    DEPLOY_SELECTOR=$(oc get deployment quarkus-demo -n quarkus-demo \
+        -o jsonpath='{.spec.selector.matchLabels}' 2>/dev/null)
+    if echo "$DEPLOY_SELECTOR" | grep -q "topology-stub"; then
+        print_success "Stub Deployment selector is isolated (contains 'topology-stub' discriminator)"
+    elif [ -n "$DEPLOY_SELECTOR" ]; then
+        print_error "Stub Deployment selector '$DEPLOY_SELECTOR' is too broad — it may match Rollout pods and scale them down"
+        print_info "  Fix: add 'app.kubernetes.io/managed-by: topology-stub' to Deployment spec.selector.matchLabels and pod template labels"
+    else
+        print_info "No stub Deployment found in quarkus-demo (will be absent before first ArgoCD sync)"
+    fi
+
+    # Check stub Deployment has replicas=0 (must never run pods itself)
+    DEPLOY_REPLICAS=$(oc get deployment quarkus-demo -n quarkus-demo \
+        -o jsonpath='{.spec.replicas}' 2>/dev/null)
+    if [ "$DEPLOY_REPLICAS" = "0" ]; then
+        print_success "Stub Deployment has replicas=0 (topology-only, does not run pods)"
+    elif [ -n "$DEPLOY_REPLICAS" ]; then
+        print_error "Stub Deployment has replicas=$DEPLOY_REPLICAS — it should always be 0"
+    fi
+
+    # Check Rollout pods are actually running (not scaled to zero by the Deployment)
+    ROLLOUT_PODS=$(oc get pods -n quarkus-demo \
+        -l app=quarkus-demo --field-selector=status.phase=Running --no-headers 2>/dev/null | wc -l)
+    ROLLOUT_DESIRED=$(oc get rollout quarkus-demo -n quarkus-demo \
+        -o jsonpath='{.spec.replicas}' 2>/dev/null)
+    if [ "$ROLLOUT_PODS" -ge "${ROLLOUT_DESIRED:-1}" ]; then
+        print_success "Rollout has $ROLLOUT_PODS/$ROLLOUT_DESIRED running pods"
+    else
+        print_error "Rollout has only $ROLLOUT_PODS/$ROLLOUT_DESIRED running pods — possible selector conflict or scale-down"
+    fi
+
+    # Check OpenShift Topology visibility: stub Deployment must have required labels
+    PART_OF=$(oc get deployment quarkus-demo -n quarkus-demo \
+        -o jsonpath='{.metadata.labels.app\.kubernetes\.io/part-of}' 2>/dev/null)
+    RUNTIME=$(oc get deployment quarkus-demo -n quarkus-demo \
+        -o jsonpath='{.metadata.labels.app\.openshift\.io/runtime}' 2>/dev/null)
+    CONNECTS_TO=$(oc get deployment quarkus-demo -n quarkus-demo \
+        -o jsonpath='{.metadata.annotations.app\.openshift\.io/connects-to}' 2>/dev/null)
+    if [ -n "$PART_OF" ] && [ -n "$RUNTIME" ] && [ -n "$CONNECTS_TO" ]; then
+        print_success "Stub Deployment has OpenShift Topology labels (app.kubernetes.io/part-of, app.openshift.io/runtime, app.openshift.io/connects-to)"
+    else
+        print_warning "Stub Deployment may be missing OpenShift Topology labels — app may not appear in Developer Topology view"
+        [ -z "$PART_OF" ]     && print_info "  Missing: app.kubernetes.io/part-of"
+        [ -z "$RUNTIME" ]     && print_info "  Missing: app.openshift.io/runtime"
+        [ -z "$CONNECTS_TO" ] && print_info "  Missing: app.openshift.io/connects-to annotation"
+    fi
+else
+    print_info "Namespace 'quarkus-demo' not found yet — skipping Rollout checks (expected before first ArgoCD sync)"
 fi
 
 # Optional: Canary Application Validation
