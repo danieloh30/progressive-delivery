@@ -18,6 +18,7 @@ spec:
   selector:
     matchLabels:
       app: quarkus-demo
+      app.kubernetes.io/managed-by: topology-stub
   template:
     metadata:
       labels:
@@ -26,6 +27,7 @@ spec:
         app.kubernetes.io/part-of: quarkus-demo-app
         app.openshift.io/runtime: quarkus
         app.kubernetes.io/component: backend
+        app.kubernetes.io/managed-by: topology-stub
     spec:
       containers:
       - name: quarkus-demo
