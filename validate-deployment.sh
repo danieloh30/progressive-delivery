@@ -250,8 +250,55 @@ else
     print_info "  Fix: set .spec.rbac.scopes to '[groups,email,preferred_username]'"
 fi
 
-# Phase 5: GitOps Configuration Validation
-print_header "Phase 5: GitOps Configuration"
+# Phase 5: Kubernetes Agent Credentials Validation
+print_header "Phase 5: Kubernetes Agent Credentials"
+
+# Check the secret exists
+if oc get secret kubernetes-agent -n openshift-gitops &>/dev/null; then
+    print_success "Secret 'kubernetes-agent' exists in openshift-gitops"
+
+    # Check GitHub token is present and valid against the live API
+    GH_TOKEN=$(oc get secret kubernetes-agent -n openshift-gitops \
+        -o jsonpath='{.data.github_token}' 2>/dev/null | base64 -d 2>/dev/null)
+    if [ -z "$GH_TOKEN" ]; then
+        print_warning "GitHub token not set in secret — issue creation will be disabled"
+    else
+        GH_STATUS=$(curl -sf -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/user" 2>/dev/null)
+        if [ "$GH_STATUS" = "200" ]; then
+            print_success "GitHub token is valid (API returned 200)"
+        elif [ "$GH_STATUS" = "401" ]; then
+            print_error "GitHub token is expired or revoked (API returned 401)"
+            print_info "  Fix: generate a new PAT at https://github.com/settings/tokens (repo scope)"
+            print_info "  Then: oc create secret generic kubernetes-agent -n openshift-gitops \\"
+            print_info "          --from-literal=github_token=<new-token> --dry-run=client -o yaml | oc apply -f -"
+        else
+            print_warning "GitHub token check returned unexpected status: $GH_STATUS"
+        fi
+    fi
+
+    # Check at least one AI key (Google or OpenAI) is present
+    GOOGLE_KEY=$(oc get secret kubernetes-agent -n openshift-gitops \
+        -o jsonpath='{.data.google_api_key}' 2>/dev/null | base64 -d 2>/dev/null)
+    OPENAI_KEY=$(oc get secret kubernetes-agent -n openshift-gitops \
+        -o jsonpath='{.data.openai_api_key}' 2>/dev/null | base64 -d 2>/dev/null)
+    if [ -n "$GOOGLE_KEY" ] || [ -n "$OPENAI_KEY" ]; then
+        print_success "At least one AI API key (Google/OpenAI) is configured"
+    else
+        print_error "No AI API key found (google_api_key or openai_api_key) — AI analysis will fail"
+        print_info "  Fix: oc create secret generic kubernetes-agent -n openshift-gitops \\"
+        print_info "          --from-literal=google_api_key=<key> --dry-run=client -o yaml | oc apply -f -"
+    fi
+else
+    print_error "Secret 'kubernetes-agent' not found in openshift-gitops"
+    print_info "  Fix: cp system/kubernetes-agent/secret.yaml.template system/kubernetes-agent/secret.yaml"
+    print_info "       # fill in credentials, then: oc apply -f system/kubernetes-agent/secret.yaml"
+fi
+
+# Phase 6: GitOps Configuration Validation
+print_header "Phase 6: GitOps Configuration"
 
 # Check AppProjects
 if oc get appproject system -n openshift-gitops &>/dev/null; then
@@ -305,8 +352,8 @@ else
     print_warning "No ArgoCD Applications found"
 fi
 
-# Phase 6: Quarkus Rollout Health Validation
-print_header "Phase 6: Quarkus Rollout (quarkus-demo)"
+# Phase 7: Quarkus Rollout Health Validation
+print_header "Phase 7: Quarkus Rollout (quarkus-demo)"
 
 if oc get namespace quarkus-demo &>/dev/null; then
     # Check Rollout exists and is Healthy (not Degraded/Paused/Aborted)
