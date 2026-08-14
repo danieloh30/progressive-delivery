@@ -33,4 +33,26 @@ subjects:
 - kind: ServiceAccount
   name: quarkus-demo
   namespace: quarkus-demo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pod-log-reader
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/log"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: quarkus-demo-pod-log-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: pod-log-reader
+subjects:
+- kind: ServiceAccount
+  name: quarkus-demo
+  namespace: quarkus-demo
 
