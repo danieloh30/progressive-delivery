@@ -40,16 +40,10 @@ spec:
           containerPort: 8080
           protocol: TCP
         env:
-        - name: SCENARIO_MODE
-          value: "success"
         - name: ROLLOUT_NAME
           value: "quarkus-demo"
         - name: ROLLOUT_NAMESPACE
           value: "quarkus-demo"
-        - name: ENABLE_NULL_POINTER_BUG
-          value: "false"
-        - name: ENABLE_MEMORY_LEAK
-          value: "false"
   strategy:
     canary:
       # Add revision labels to stable and canary pods
