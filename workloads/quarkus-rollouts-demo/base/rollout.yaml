@@ -39,6 +39,18 @@ spec:
         - name: http
           containerPort: 8080
           protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /q/health/ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /q/health/live
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
         env:
         - name: ROLLOUT_NAME
           value: "quarkus-demo"

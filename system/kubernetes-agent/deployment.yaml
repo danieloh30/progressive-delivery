@@ -65,7 +65,7 @@ spec:
             - name: GIT_USERNAME
               value: "kubernetes-agent"
             - name: GIT_EMAIL
-              value: "kubernetes-agent@csanchez.org"
+              value: "kubernetes-agent@danieloh30.dev"
           resources:
             requests:
               memory: "512Mi"

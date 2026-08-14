@@ -13,8 +13,8 @@ patches:
     name: quarkus-demo
 
 images:
-- name: quay.io/kevindubois/argo-rollouts-quarkus-demo
-  newName: ghcr.io/kdubois/argo-rollouts-quarkus-demo
+- name: quay.io/danieloh30/argo-rollouts-quarkus-demo
+  newName: quay.io/danieloh30/argo-rollouts-quarkus-demo
   newTag: v3.memoryleak
 
 commonLabels:
