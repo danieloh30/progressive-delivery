@@ -30,9 +30,9 @@ spec:
       serviceAccountName: quarkus-demo
       containers:
       - name: quarkus-demo
-        image: quay.io/danieloh30/argo-rollouts-quarkus-demo:1.0.0
+#        image: quay.io/danieloh30/argo-rollouts-quarkus-demo:1.0.0
 #        image: quay.io/danieloh30/argo-rollouts-quarkus-demo:v1.stable
-#        image: quay.io/danieloh30/argo-rollouts-quarkus-demo:v2.nullpointer
+        image: quay.io/danieloh30/argo-rollouts-quarkus-demo:v2.nullpointer
 #        image: quay.io/danieloh30/argo-rollouts-quarkus-demo:v3.memoryleak
         imagePullPolicy: Always
         ports:
@@ -47,7 +47,7 @@ spec:
         - name: ROLLOUT_NAMESPACE
           value: "quarkus-demo"
         - name: ENABLE_NULL_POINTER_BUG
-          value: "false"
+          value: "true"
   strategy:
     canary:
       # Add revision labels to stable and canary pods
