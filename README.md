@@ -53,7 +53,8 @@ progressive-delivery/
 |   |   +-- overlays/
 |   |       |-- scenario-1-stable/        v1.stable image   (healthy release)
 |   |       |-- scenario-2-null-pointer/  v2.nullpointer    (NPE in canary)
-|   |       +-- scenario-3-memory-leak/   v3.memoryleak     (OOM in canary)
+|   |       |-- scenario-3-memory-leak/   v3.memoryleak     (OOM in canary)
+|   |       +-- scenario-4-slow-dep/      v4.slowdependency (downstream timeout)
 |   +-- canary-app/                       Simpler canary demo (argoproj/rollouts-demo)
 ```
 
@@ -109,11 +110,12 @@ If you fork this repo, update the `repoURL` fields in `components/applicationset
 
 Each scenario uses a different container image tag that exhibits a specific behavior during canary analysis. To trigger a scenario, change the image tag in `workloads/quarkus-rollouts-demo/base/rollout.yaml`:
 
-| Scenario | Image Tag | Behavior |
-|---|---|---|
-| Stable release | `v1.stable` | Clean rollout -- AI finds no issues, canary is promoted |
-| NullPointerException | `v2.nullpointer` | Canary pods throw NPE -- AI detects the error, rollout aborts |
-| Memory leak | `v3.memoryleak` | Canary pods leak memory -- AI detects OOM patterns, rollout aborts |
+| Scenario | Image Tag | Behavior | Agent Action |
+|---|---|---|---|
+| Stable release | `v1.stable` | Clean rollout -- AI finds no issues, canary is promoted | None |
+| NullPointerException | `v2.nullpointer` | Canary pods throw NPE -- AI detects the error, rollout aborts | Creates **PR** with fix |
+| Memory leak | `v3.memoryleak` | Canary pods leak memory -- AI detects OOM patterns, rollout aborts | Creates **Issue** with RCA |
+| Slow dependency | `v4.slowdependency` | Downstream service degrades, 30% timeout rate after 60 s | Creates **Issue** with RCA |
 
 ### Running a Scenario
 
@@ -141,7 +143,7 @@ Each scenario uses a different container image tag that exhibits a specific beha
    oc argo rollouts get rollout quarkus-demo -n quarkus-demo --watch
    ```
 
-5. During the canary phase the AI metric plugin calls the Kubernetes Agent, which fetches logs from stable and canary pods, analyzes them with the configured LLM, and returns a promote or abort decision. On abort, a GitHub issue is created automatically.
+5. During the canary phase the AI metric plugin calls the Kubernetes Agent, which fetches logs from stable and canary pods, analyzes them with the configured LLM, and returns a promote or abort decision. On abort, the agent creates a GitHub PR (code bugs) or Issue (operational problems) automatically.
 
 6. To reset, switch the image tag back to `v1.stable` and push.
 
