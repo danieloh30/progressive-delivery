@@ -34,6 +34,7 @@ spec:
 #        image: quay.io/danieloh30/argo-rollouts-quarkus-demo:v1.stable
 #        image: quay.io/danieloh30/argo-rollouts-quarkus-demo:v2.nullpointer
 #        image: quay.io/danieloh30/argo-rollouts-quarkus-demo:v3.memoryleak
+#        image: quay.io/danieloh30/argo-rollouts-quarkus-demo:v4.slowdependency
         imagePullPolicy: Always
         ports:
         - name: http
